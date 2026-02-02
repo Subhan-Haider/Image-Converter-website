@@ -145,6 +145,15 @@ class ImageConverter {
         this.maxWidth = document.getElementById('maxWidth');
         this.maxHeight = document.getElementById('maxHeight');
 
+        // New Background Fill Elements
+        this.backgroundFillMode = document.getElementById('backgroundFillMode');
+        this.bgColorControls = document.getElementById('bgColorControls');
+        this.bgImageControls = document.getElementById('bgImageControls');
+        this.bgImageInput = document.getElementById('bgImageInput');
+        this.bgImageBtn = document.getElementById('bgImageBtn');
+        this.bgImagePreview = document.getElementById('bgImagePreview');
+        this.customBgImage = null; // Store the uploaded background image object
+
         // Button groups
         this.percentButtons = document.querySelectorAll('.percent-btn');
         this.bgPresetButtons = document.querySelectorAll('.bg-preset-btn');
@@ -435,6 +444,44 @@ class ImageConverter {
             });
         });
 
+        // Background Fill Mode toggle
+        if (this.backgroundFillMode) {
+            this.backgroundFillMode.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                if (this.bgColorControls) this.bgColorControls.style.display = mode === 'color' ? 'flex' : 'none';
+                if (this.bgImageControls) this.bgImageControls.style.display = mode === 'image' ? 'block' : 'none';
+            });
+        }
+
+        // Background Image Upload
+        if (this.bgImageBtn) this.bgImageBtn.addEventListener('click', () => this.bgImageInput.click());
+        if (this.bgImageInput) {
+            this.bgImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            this.customBgImage = img;
+                            if (this.bgImagePreview) {
+                                this.bgImagePreview.style.display = 'block';
+                                this.bgImagePreview.textContent = `BG: ${file.name}`;
+                            }
+                            this.showNotification('Background image loaded!', 'success');
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Auto Background toggle visibility
+        if (this.autoBackground) {
+            this.autoBackground.addEventListener('change', () => this.updateBackgroundVisibility());
+        }
+
         // Action buttons
         if (this.convertBtn) this.convertBtn.addEventListener('click', () => this.convertAll());
         if (this.clearBtn) this.clearBtn.addEventListener('click', () => this.clearAll());
@@ -447,11 +494,41 @@ class ImageConverter {
         this.loadThemePreference();
 
         // Initial format check
-        if (this.outputFormat) this.outputFormat.dispatchEvent(new Event('change'));
+        if (this.outputFormat) {
+            this.outputFormat.addEventListener('change', (e) => {
+                this.updateBackgroundVisibility();
+            });
+        }
         if (this.resizeType) this.resizeType.dispatchEvent(new Event('change'));
         if (this.zipFormat) this.zipFormat.dispatchEvent(new Event('change'));
         this.selectPreset('none');
         this.updateUserPresetsUI();
+    }
+
+    updateBackgroundVisibility() {
+        const format = this.outputFormat.value;
+        const needsBackground = format === 'jpg' || format === 'jpeg';
+        const isAutoBg = this.autoBackground && this.autoBackground.checked;
+
+        if (this.backgroundColorGroup) {
+            this.backgroundColorGroup.style.display = (needsBackground || isAutoBg) ? 'block' : 'none';
+        }
+        // Ensure background controls are visible if Auto BG is active
+        if (isAutoBg && this.backgroundFillMode) {
+            const mode = this.backgroundFillMode.value;
+            if (this.bgColorControls) this.bgColorControls.style.display = mode === 'color' ? 'flex' : 'none';
+            if (this.bgImageControls) this.bgImageControls.style.display = mode === 'image' ? 'block' : 'none';
+        } else if (!isAutoBg && this.backgroundFillMode) {
+            // If auto BG is off, hide specific controls unless format requires it
+            if (!needsBackground) {
+                if (this.bgColorControls) this.bgColorControls.style.display = 'none';
+                if (this.bgImageControls) this.bgImageControls.style.display = 'none';
+            } else {
+                // If format requires background, show color controls by default
+                if (this.bgColorControls) this.bgColorControls.style.display = 'flex';
+                if (this.bgImageControls) this.bgImageControls.style.display = 'none';
+            }
+        }
     }
 
 
@@ -1358,13 +1435,26 @@ class ImageConverter {
 
                 // Set background
                 const isAutoBg = this.autoBackground && this.autoBackground.checked && imageData.hasTransparency;
+                const bgFillMode = this.backgroundFillMode ? this.backgroundFillMode.value : 'color';
 
                 if ((format === 'jpg' || format === 'jpeg') && !preserveTrans) {
                     ctx.fillStyle = bgColor || '#ffffff';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 } else if ((bgColor && bgColor !== 'transparent') || isAutoBg) {
-                    ctx.fillStyle = (bgColor && bgColor !== 'transparent') ? bgColor : '#ffffff';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    if (isAutoBg && bgFillMode === 'blurred') {
+                        // Blurred dynamic background
+                        ctx.save();
+                        ctx.filter = 'blur(20px) brightness(0.8)';
+                        ctx.drawImage(imageData.image, 0, 0, canvas.width, canvas.height);
+                        ctx.restore();
+                    } else if (isAutoBg && bgFillMode === 'image' && this.customBgImage) {
+                        // Custom image background
+                        ctx.drawImage(this.customBgImage, 0, 0, canvas.width, canvas.height);
+                    } else {
+                        // Solid color
+                        ctx.fillStyle = (bgColor && bgColor !== 'transparent') ? bgColor : '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
                 }
 
                 progressCallback(30);
