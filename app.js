@@ -495,10 +495,11 @@ class ImageConverter {
 
         // Initial format check
         if (this.outputFormat) {
-            this.outputFormat.addEventListener('change', (e) => {
-                this.updateBackgroundVisibility();
-            });
+            this.outputFormat.addEventListener('change', () => this.updateBackgroundVisibility());
         }
+
+        // Final initialization
+        this.updateBackgroundVisibility();
         if (this.resizeType) this.resizeType.dispatchEvent(new Event('change'));
         if (this.zipFormat) this.zipFormat.dispatchEvent(new Event('change'));
         this.selectPreset('none');
@@ -506,28 +507,18 @@ class ImageConverter {
     }
 
     updateBackgroundVisibility() {
-        const format = this.outputFormat.value;
+        const format = this.outputFormat ? this.outputFormat.value : 'png';
         const needsBackground = format === 'jpg' || format === 'jpeg';
         const isAutoBg = this.autoBackground && this.autoBackground.checked;
 
         if (this.backgroundColorGroup) {
             this.backgroundColorGroup.style.display = (needsBackground || isAutoBg) ? 'block' : 'none';
         }
-        // Ensure background controls are visible if Auto BG is active
-        if (isAutoBg && this.backgroundFillMode) {
+
+        if (this.backgroundFillMode) {
             const mode = this.backgroundFillMode.value;
-            if (this.bgColorControls) this.bgColorControls.style.display = mode === 'color' ? 'flex' : 'none';
-            if (this.bgImageControls) this.bgImageControls.style.display = mode === 'image' ? 'block' : 'none';
-        } else if (!isAutoBg && this.backgroundFillMode) {
-            // If auto BG is off, hide specific controls unless format requires it
-            if (!needsBackground) {
-                if (this.bgColorControls) this.bgColorControls.style.display = 'none';
-                if (this.bgImageControls) this.bgImageControls.style.display = 'none';
-            } else {
-                // If format requires background, show color controls by default
-                if (this.bgColorControls) this.bgColorControls.style.display = 'flex';
-                if (this.bgImageControls) this.bgImageControls.style.display = 'none';
-            }
+            if (this.bgColorControls) this.bgColorControls.style.display = (mode === 'color') ? 'flex' : 'none';
+            if (this.bgImageControls) this.bgImageControls.style.display = (mode === 'image') ? 'block' : 'none';
         }
     }
 
@@ -1380,18 +1371,12 @@ class ImageConverter {
                 canvas.width = finalWidth;
                 canvas.height = finalHeight;
 
-                // Apply Filters
-                const brightness = this.filterBrightness ? this.filterBrightness.value : 100;
-                const contrast = this.filterContrast ? this.filterContrast.value : 100;
-                const grayscale = this.filterGrayscale && this.filterGrayscale.checked ? 100 : 0;
-                const sepia = this.filterSepia && this.filterSepia.checked ? 100 : 0;
+                // Set background
+                const isAutoBg = this.autoBackground && this.autoBackground.checked && imageData.hasTransparency;
+                const bgFillMode = this.backgroundFillMode ? this.backgroundFillMode.value : 'color';
 
-                ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) grayscale(${grayscale}%) sepia(${sepia}%)`;
-
-                // Fill background
-                if (bgColor) {
-                    ctx.fillStyle = bgColor;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if ((format === 'jpg' || format === 'jpeg' && !preserveTrans) || (bgColor && bgColor !== 'transparent') || isAutoBg) {
+                    this.applySelectedBackground(ctx, canvas.width, canvas.height, imageData, bgColor, isAutoBg, bgFillMode);
                 }
 
                 ctx.drawImage(imageData.image, offsetX, offsetY, scaledWidth, scaledHeight);
@@ -1437,24 +1422,8 @@ class ImageConverter {
                 const isAutoBg = this.autoBackground && this.autoBackground.checked && imageData.hasTransparency;
                 const bgFillMode = this.backgroundFillMode ? this.backgroundFillMode.value : 'color';
 
-                if ((format === 'jpg' || format === 'jpeg') && !preserveTrans) {
-                    ctx.fillStyle = bgColor || '#ffffff';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                } else if ((bgColor && bgColor !== 'transparent') || isAutoBg) {
-                    if (isAutoBg && bgFillMode === 'blurred') {
-                        // Blurred dynamic background
-                        ctx.save();
-                        ctx.filter = 'blur(20px) brightness(0.8)';
-                        ctx.drawImage(imageData.image, 0, 0, canvas.width, canvas.height);
-                        ctx.restore();
-                    } else if (isAutoBg && bgFillMode === 'image' && this.customBgImage) {
-                        // Custom image background
-                        ctx.drawImage(this.customBgImage, 0, 0, canvas.width, canvas.height);
-                    } else {
-                        // Solid color
-                        ctx.fillStyle = (bgColor && bgColor !== 'transparent') ? bgColor : '#ffffff';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
+                if ((format === 'jpg' || format === 'jpeg' && !preserveTrans) || (bgColor && bgColor !== 'transparent') || isAutoBg) {
+                    this.applySelectedBackground(ctx, canvas.width, canvas.height, imageData, bgColor, isAutoBg, bgFillMode);
                 }
 
                 progressCallback(30);
@@ -1644,6 +1613,20 @@ class ImageConverter {
                 });
             }, canvasMimeType, quality);
         });
+    }
+
+    applySelectedBackground(ctx, width, height, imageData, bgColor, isAutoBg, bgFillMode) {
+        if (bgFillMode === 'blurred') {
+            ctx.save();
+            ctx.filter = 'blur(20px) brightness(0.8)';
+            ctx.drawImage(imageData.image, 0, 0, width, height);
+            ctx.restore();
+        } else if (bgFillMode === 'image' && this.customBgImage) {
+            ctx.drawImage(this.customBgImage, 0, 0, width, height);
+        } else {
+            ctx.fillStyle = (bgColor && bgColor !== 'transparent') ? bgColor : '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+        }
     }
 
     generateFileName(originalName, format, sizeName = '', index = 0) {
