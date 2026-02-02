@@ -442,7 +442,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
     position: relative;
     display: flex;
     flex-direction: column;
-    group: image-card;
     /* Concept only, used for hover context */
 }
 
@@ -777,4 +776,133 @@ kbd {
     font-family: monospace;
     font-size: 0.8rem;
     border-bottom: 2px solid var(--border);
+}
+
+/* --- Mobile Responsiveness Excellence --- */
+@media (max-width: 640px) {
+    .container {
+        padding: 1rem;
+    }
+
+    header {
+        margin-bottom: 2rem;
+        padding: 1rem 0;
+    }
+
+    .header-top {
+        position: static;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .logo-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .header-logo {
+        width: 48px;
+        height: 48px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+        padding: 0 1rem;
+    }
+
+    .glass-card {
+        padding: 1.25rem;
+        border-radius: var(--radius-lg);
+    }
+
+    .upload-area {
+        padding: 2.5rem 1rem;
+        border-radius: var(--radius-xl);
+    }
+
+    .upload-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 1rem;
+    }
+
+    .upload-content h2 {
+        font-size: 1.4rem;
+    }
+
+    .settings-section {
+        padding: 1rem;
+    }
+
+    .preset-buttons {
+        gap: 0.5rem;
+    }
+
+    .preset-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        flex: 1 1 40%;
+        text-align: center;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+    }
+
+    .images-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .image-preview-container {
+        height: 160px;
+    }
+
+    .comparison-img {
+        height: 200px;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+    }
+
+    .keyboard-shortcuts {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .shortcuts-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .shortcuts-panel {
+        width: calc(100vw - 2rem);
+        right: 0;
+        bottom: 52px;
+    }
+
+    /* Better touch targets for selects and inputs */
+    select,
+    input[type="text"],
+    input[type="number"] {
+        font-size: 16px;
+        /* Prevents iOS zoom-on-focus */
+        padding: 0.875rem;
+    }
+
+    .custom-checkbox {
+        padding: 0.5rem 0;
+    }
+
+    .checkmark {
+        width: 24px;
+        height: 24px;
+    }
 }
