@@ -138,6 +138,21 @@
                                 <option value="circular">Circular Profile</option>
                             </select>
                         </div>
+                        <div class="setting-group" id="backgroundColorGroup" style="display: none;">
+                            <label>Background Color</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="color" id="backgroundColor" value="#ffffff"
+                                    style="width: 40px; height: 40px; padding: 0; border: none; background: none; cursor: pointer;">
+                                <div class="bg-presets" style="display: flex; gap: 0.3rem;">
+                                    <button class="bg-preset-btn" data-color="#ffffff" title="White"
+                                        style="width: 24px; height: 24px; background: #ffffff; border: 1px solid var(--border-light); border-radius: 4px; cursor: pointer;"></button>
+                                    <button class="bg-preset-btn" data-color="#000000" title="Black"
+                                        style="width: 24px; height: 24px; background: #000000; border: 1px solid var(--border-light); border-radius: 4px; cursor: pointer;"></button>
+                                    <button class="bg-preset-btn" data-color="transparent" title="Transparent"
+                                        style="width: 24px; height: 24px; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAACtJREFUGFdjZEADy0AGIyMTmGRkZIAIuLgYwRSRBC7OACYZGZkgAjY2RjBFAM9ICB6D9I9VAAAAAElFTkSuQmCC'); border: 1px solid var(--border-light); border-radius: 4px; cursor: pointer;"></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -201,6 +216,11 @@
                                 <input type="checkbox" id="folderImport">
                                 <span class="checkmark"></span>
                                 <span>Folder Mode</span>
+                            </label>
+                            <label class="custom-checkbox" title="Automatically add background to transparent images">
+                                <input type="checkbox" id="autoBackground" checked>
+                                <span class="checkmark"></span>
+                                <span>Auto BG</span>
                             </label>
                         </div>
 

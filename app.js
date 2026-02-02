@@ -128,6 +128,7 @@ class ImageConverter {
         this.convertMultipleFormats = document.getElementById('convertMultipleFormats');
         this.formatOptions = document.querySelectorAll('.format-option');
         this.autoPadding = document.getElementById('autoPadding');
+        this.autoBackground = document.getElementById('autoBackground');
         this.cropShape = document.getElementById('cropShape');
         this.dpi = document.getElementById('dpi');
 
@@ -886,7 +887,8 @@ class ImageConverter {
                         width: img.width,
                         height: img.height,
                         image: img,
-                        format: this.detectFormat(file.name, file.type)
+                        format: this.detectFormat(file.name, file.type),
+                        hasTransparency: this.checkTransparency(img)
                     });
                 };
 
@@ -914,6 +916,28 @@ class ImageConverter {
             'heic': 'heic'
         };
         return formatMap[ext] || mimeType.split('/')[1] || 'unknown';
+    }
+
+    checkTransparency(img) {
+        try {
+            const canvas = document.createElement('canvas');
+            // Use a small scale for performance, but large enough to detect details
+            const size = Math.min(img.width, img.height, 100);
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, size, size);
+
+            const imageData = ctx.getImageData(0, 0, size, size).data;
+            for (let i = 3; i < imageData.length; i += 4) {
+                if (imageData[i] < 255) {
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.warn('Could not check transparency:', e);
+        }
+        return false;
     }
 
     updateUI() {
@@ -1333,11 +1357,13 @@ class ImageConverter {
                 ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) grayscale(${grayscale}%) sepia(${sepia}%)`;
 
                 // Set background
+                const isAutoBg = this.autoBackground && this.autoBackground.checked && imageData.hasTransparency;
+
                 if ((format === 'jpg' || format === 'jpeg') && !preserveTrans) {
                     ctx.fillStyle = bgColor || '#ffffff';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                } else if (bgColor && bgColor !== 'transparent') {
-                    ctx.fillStyle = bgColor;
+                } else if ((bgColor && bgColor !== 'transparent') || isAutoBg) {
+                    ctx.fillStyle = (bgColor && bgColor !== 'transparent') ? bgColor : '#ffffff';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
 
