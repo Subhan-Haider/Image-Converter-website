@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://subhan-haider.github.io/Image-Converter-website/sitemap.xml
+Sitemap: https://lootops.website/sitemap.xml
