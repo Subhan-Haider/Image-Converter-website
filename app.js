@@ -1616,6 +1616,8 @@ class ImageConverter {
     }
 
     applySelectedBackground(ctx, width, height, imageData, bgColor, isAutoBg, bgFillMode) {
+        if (bgFillMode === 'none') return;
+
         if (bgFillMode === 'blurred') {
             ctx.save();
             ctx.filter = 'blur(20px) brightness(0.8)';
